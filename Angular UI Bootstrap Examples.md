@@ -193,6 +193,30 @@
     </div>
     <!-- Pagination Example End -->
 
+      <hr>  
+    
+         <!-- Advanced Pagination with Filters Example Start -->
+    <div class="example-section text-center">
+      <div class="example-description">
+        <h4>Advanced Pagination</h4>
+        <p>Pagination combined with filters to navigate and filter content.</p>
+      </div>
+
+      <div class="filter-section">
+        <label for="filterInput">Filter by Number or Short Description:</label>
+        <input type="text" id="filterInput" class="form-control" ng-model="c.searchFilter" ng-change="c.applyFilter()">
+      </div>
+
+      <uib-pagination total-items="c.totalItems" ng-model="c.currentPage" max-size="5" items-per-page="c.itemsPerPage" boundary-links="true" ng-change="c.updatePage()"></uib-pagination>
+
+      <ul class="list-group">
+        <li class="list-group-item" ng-repeat="item in c.paginatedItems">
+          <strong>{{item.number}}:</strong> {{item.short_description}}
+        </li>
+      </ul>
+    </div>
+    <!-- Advanced Pagination with Filters Example End -->
+    
     <hr>
 
     <!-- Progressbar Example Start -->
@@ -320,30 +344,6 @@
       <button class="btn btn-warning" uib-popover-template="c.dynamicPopoverTemplateUrl" popover-title="Dynamic Content" popover-trigger="mouseenter">Hover me!</button>
     </div>
     <!-- Popover with Dynamic Content Example End -->
-
-    <hr>
-
-    <!-- Advanced Pagination with Filters Example Start -->
-    <div class="example-section text-center">
-      <div class="example-description">
-        <h4>Advanced Pagination</h4>
-        <p>Pagination combined with filters to navigate and filter content.</p>
-      </div>
-
-      <div class="filter-section">
-        <label for="filterInput">Filter by Short Description:</label>
-        <input type="text" id="filterInput" class="form-control" ng-model="c.searchFilter" ng-change="c.applyFilter()">
-      </div>
-
-      <uib-pagination total-items="c.filteredItems.length" ng-model="c.currentPage" max-size="5" items-per-page="c.itemsPerPage" boundary-links="true" ng-change="c.updatePage()"></uib-pagination>
-
-      <ul class="list-group">
-        <li class="list-group-item" ng-repeat="item in c.paginatedItems">
-          <strong>{{item.number}}:</strong> {{item.short_description}}
-        </li>
-      </ul>
-    </div>
-    <!-- Advanced Pagination with Filters Example End -->
 
     <hr>
 
@@ -521,6 +521,7 @@
 
   </div>
 </div>
+
 ```
 ### CSS
 ```css
@@ -659,7 +660,7 @@ api.controller = function ($scope, $uibModal, $http) {
 
     // Fetch incidents for various examples
     function loadIncidents() {
-        $http.get('/api/now/table/incident?sysparm_limit=10').then(function(response) {
+        $http.get('/api/now/table/incident?sysparm_limit=20').then(function(response) {
             c.incidents = response.data.result;
 
             // Populate various examples Start
@@ -849,8 +850,7 @@ api.controller = function ($scope, $uibModal, $http) {
     // The content of the popover is defined in an external template file
     // Popover with Dynamic Content Example End
 
-    // Advanced Pagination with Filters Example Start
-    // Simulate data with a list of incidents
+  // Advanced Pagination with Filters Example Start
     c.items = [
         { number: 'INC001', short_description: 'Network issue in building 1' },
         { number: 'INC002', short_description: 'Email server not responding' },
@@ -864,28 +864,43 @@ api.controller = function ($scope, $uibModal, $http) {
         { number: 'INC010', short_description: 'Security breach reported' }
     ];
 
-    // Pagination settings Start
+    // Pagination settings
     c.currentPage = 1;
     c.itemsPerPage = 5;
     c.searchFilter = '';
+    c.filteredItems = []; // Will hold items after filtering
+    c.paginatedItems = []; // Will hold items for the current page
 
-    // Function to apply the filter and reset pagination
+    // Function to filter items and update pagination
     c.applyFilter = function() {
-        c.filteredItems = c.items.filter(item => item.short_description.toLowerCase().includes(c.searchFilter.toLowerCase()));
-        c.updatePage();
-    };
+    if (c.searchFilter.trim() === '') {
+        // If no filter is applied, show all items
+        c.filteredItems = c.items.slice();
+    } else {
+        // Apply the filter to multiple fields (number and short_description)
+        c.filteredItems = c.items.filter(item =>
+            item.short_description.toLowerCase().includes(c.searchFilter.toLowerCase()) ||
+            item.number.toLowerCase().includes(c.searchFilter.toLowerCase())
+        );
+    }
+    c.currentPage = 1; // Reset to the first page after filtering
+    c.totalItems = c.filteredItems.length; // Update total items for pagination
+    c.updatePage(); // Update the page with the filtered items
+};
+
 
     // Function to update the displayed page of items
     c.updatePage = function() {
-        var begin = ((c.currentPage - 1) * c.itemsPerPage);
+        var begin = (c.currentPage - 1) * c.itemsPerPage;
         var end = begin + c.itemsPerPage;
         c.paginatedItems = c.filteredItems.slice(begin, end);
     };
 
-    // Initialize the filtered items and pagination
-    c.applyFilter();
-    // Pagination settings End
+    // Load the initial set of items and apply pagination
+    c.applyFilter(); // Apply the filter initially to set up pagination
     // Advanced Pagination with Filters Example End
+
+
 
     // File Upload with Progress Bar Example Start
     c.uploadProgress = 0;
@@ -1252,6 +1267,7 @@ api.controller = function ($scope, $uibModal, $http) {
     };
     // Modal with Related Records Example End
 };
+
 ```
 ### Server Script
 ### incident table
